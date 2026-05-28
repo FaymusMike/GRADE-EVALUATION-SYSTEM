@@ -1,3 +1,4 @@
+<!-- register.html - Complete Student Registration Portal -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,11 +7,11 @@
     <title>Student Registration | JPTS Institute</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
     <style>
         .registration-container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 2rem auto;
             padding: 2rem;
         }
@@ -25,27 +26,30 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 2rem;
+            position: relative;
         }
         .step {
             flex: 1;
             text-align: center;
             position: relative;
+            z-index: 2;
         }
         .step .circle {
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             background: #e0e0e0;
             border-radius: 50%;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            position: relative;
-            z-index: 2;
+            font-size: 1.2rem;
+            transition: all 0.3s;
         }
         .step.active .circle {
             background: var(--gradient-primary);
             color: white;
+            box-shadow: 0 0 0 3px rgba(155, 89, 182, 0.3);
         }
         .step.completed .circle {
             background: #28a745;
@@ -54,41 +58,116 @@
         .step .label {
             margin-top: 0.5rem;
             font-size: 0.85rem;
+            font-weight: 500;
         }
         .step:not(:last-child):before {
             content: '';
             position: absolute;
-            top: 20px;
+            top: 22px;
             left: 50%;
             width: 100%;
             height: 2px;
             background: #e0e0e0;
-            z-index: 1;
+            z-index: -1;
         }
         .step.active:not(:last-child):before,
         .step.completed:not(:last-child):before {
             background: var(--primary-color);
         }
         .passport-preview {
-            width: 100px;
-            height: 100px;
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
             object-fit: cover;
-            margin-top: 1rem;
+            border: 3px solid var(--primary-color);
+            margin-top: 0.5rem;
+        }
+        .password-strength {
+            height: 4px;
+            margin-top: 5px;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+        .strength-weak { width: 33%; background: #dc3545; }
+        .strength-medium { width: 66%; background: #ffc107; }
+        .strength-strong { width: 100%; background: #28a745; }
+        .info-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            height: 100%;
+        }
+        .split-layout {
+            min-height: 100vh;
+            display: flex;
+        }
+        .info-side {
+            flex: 1;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .form-side {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: var(--bg-light);
+        }
+        @media (max-width: 768px) {
+            .split-layout {
+                flex-direction: column;
+            }
+            .info-side {
+                padding: 2rem;
+                text-align: center;
+            }
         }
     </style>
 </head>
-<body class="auth-body">
-    <div class="container">
-        <div class="registration-container card shadow-lg border-0">
-            <div class="card-body p-4">
-                <div class="text-center mb-4">
-                    <i class="bi bi-mortarboard-fill fs-1 text-primary"></i>
-                    <h2 class="mt-2">JPTS Institute</h2>
-                    <p class="text-muted">Student Registration Portal</p>
-                    <p class="small text-muted">All registrations require admin approval before access</p>
+<body>
+    <div class="split-layout">
+        <!-- Left Side - Information -->
+        <div class="info-side">
+            <div class="text-center">
+                <i class="bi bi-mortarboard-fill fs-1 mb-3"></i>
+                <h1 class="display-5 fw-bold mb-3">JPTS Institute</h1>
+                <p class="lead mb-4">Join the premier institution for academic excellence</p>
+                <div class="mt-4">
+                    <div class="d-flex align-items-center justify-content-center gap-3 mb-3">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>World-class education</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-center gap-3 mb-3">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>Industry-relevant curriculum</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-center gap-3 mb-3">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>Expert faculty members</span>
+                    </div>
                 </div>
-                
+                <div class="mt-5 pt-3">
+                    <p class="small">Already have an account? <a href="login.html" class="text-white fw-bold">Login here</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Registration Form -->
+        <div class="form-side">
+            <div class="registration-container w-100">
+                <div class="text-center mb-4">
+                    <h2>Student Registration</h2>
+                    <p class="text-muted">Create your academic account</p>
+                    <div class="alert alert-info small">
+                        <i class="bi bi-info-circle"></i> All registrations require admin approval before access
+                    </div>
+                </div>
+
                 <!-- Step Indicators -->
                 <div class="step-indicator">
                     <div class="step active" id="step1Indicator">
@@ -103,28 +182,33 @@
                         <div class="circle">3</div>
                         <div class="label">Security</div>
                     </div>
+                    <div class="step" id="step4Indicator">
+                        <div class="circle">4</div>
+                        <div class="label">Review</div>
+                    </div>
                 </div>
-                
+
                 <form id="registerForm">
                     <!-- Step 1: Personal Information -->
                     <div class="form-step active" id="step1">
-                        <h5 class="mb-3">Personal Information</h5>
+                        <h5 class="mb-3"><i class="bi bi-person-badge me-2"></i>Personal Information</h5>
                         <div class="row">
                             <div class="col-md-12 mb-3">
                                 <label>Full Name *</label>
-                                <input type="text" class="form-control" id="fullName" required>
+                                <input type="text" class="form-control" id="fullName" required placeholder="Enter your full name">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>Email Address *</label>
-                                <input type="email" class="form-control" id="email" required>
+                                <input type="email" class="form-control" id="email" required placeholder="student@jpts.edu">
+                                <small class="text-muted">This will be your login email</small>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>Phone Number *</label>
-                                <input type="tel" class="form-control" id="phone" required>
+                                <input type="tel" class="form-control" id="phone" required placeholder="080XXXXXXXX">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>Gender *</label>
-                                <select class="form-control" id="gender" required>
+                                <select class="form-select" id="gender" required>
                                     <option value="">Select Gender</option>
                                     <option value="Male">Male</option>
                                     <option value="Female">Female</option>
@@ -136,32 +220,33 @@
                             </div>
                             <div class="col-12 mb-3">
                                 <label>Residential Address *</label>
-                                <textarea class="form-control" id="address" rows="2" required></textarea>
+                                <textarea class="form-control" id="address" rows="2" required placeholder="Enter your full address"></textarea>
                             </div>
                             <div class="col-12 mb-3">
                                 <label>Passport Photograph</label>
-                                <input type="file" class="form-control" id="passport" accept="image/*">
-                                <img id="passportPreview" class="passport-preview" style="display: none;">
-                                <small class="text-muted">Optional - Will appear on your profile</small>
+                                <input type="file" class="form-control" id="passport" accept="image/jpeg,image/png,image/jpg">
+                                <small class="text-muted">Upload a recent passport photo (JPEG/PNG, max 2MB)</small>
+                                <div id="passportPreviewContainer"></div>
                             </div>
                         </div>
-                        <div class="text-end">
+                        <div class="d-flex justify-content-end">
                             <button type="button" class="btn btn-primary" onclick="nextStep(2)">Next <i class="bi bi-arrow-right"></i></button>
                         </div>
                     </div>
-                    
+
                     <!-- Step 2: Academic Information -->
                     <div class="form-step" id="step2">
-                        <h5 class="mb-3">Academic Information</h5>
+                        <h5 class="mb-3"><i class="bi bi-mortarboard me-2"></i>Academic Information</h5>
                         <div class="row">
                             <div class="col-md-12 mb-3">
                                 <label>Matric Number *</label>
-                                <input type="text" class="form-control" id="matricNumber" placeholder="JPT/2024/XXX" required>
+                                <input type="text" class="form-control" id="matricNumber" required placeholder="JPT/2024/XXX">
                                 <small class="text-muted">Enter your official matriculation number</small>
+                                <div id="matricError" class="text-danger small mt-1"></div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>Department *</label>
-                                <select class="form-control" id="department" required>
+                                <select class="form-select" id="department" required>
                                     <option value="">Select Department</option>
                                     <option value="Computer Science">Computer Science</option>
                                     <option value="Engineering">Engineering</option>
@@ -172,21 +257,28 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>Level *</label>
-                                <select class="form-control" id="level" required>
+                                <select class="form-select" id="level" required>
                                     <option value="">Select Level</option>
-                                    <option value="100">100 Level</option>
-                                    <option value="200">200 Level</option>
-                                    <option value="300">300 Level</option>
-                                    <option value="400">400 Level</option>
-                                    <option value="500">500 Level</option>
+                                    <option value="100">100 Level (Freshman)</option>
+                                    <option value="200">200 Level (Sophomore)</option>
+                                    <option value="300">300 Level (Junior)</option>
+                                    <option value="400">400 Level (Senior)</option>
+                                    <option value="500">500 Level (Graduate)</option>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>Current Semester *</label>
-                                <select class="form-control" id="semester" required>
+                                <select class="form-select" id="semester" required>
                                     <option value="">Select Semester</option>
                                     <option value="First">First Semester</option>
                                     <option value="Second">Second Semester</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Session *</label>
+                                <select class="form-select" id="session" required>
+                                    <option value="2023/2024">2023/2024 Academic Session</option>
+                                    <option value="2024/2025">2024/2025 Academic Session</option>
                                 </select>
                             </div>
                         </div>
@@ -195,10 +287,10 @@
                             <button type="button" class="btn btn-primary" onclick="nextStep(3)">Next <i class="bi bi-arrow-right"></i></button>
                         </div>
                     </div>
-                    
+
                     <!-- Step 3: Security -->
                     <div class="form-step" id="step3">
-                        <h5 class="mb-3">Account Security</h5>
+                        <h5 class="mb-3"><i class="bi bi-shield-lock me-2"></i>Account Security</h5>
                         <div class="row">
                             <div class="col-md-12 mb-3">
                                 <label>Password *</label>
@@ -208,7 +300,11 @@
                                         <i class="bi bi-eye-slash"></i>
                                     </button>
                                 </div>
+                                <div class="password-strength-meter mt-2">
+                                    <div class="password-strength" id="passwordStrength"></div>
+                                </div>
                                 <small class="text-muted">Minimum 8 characters, at least one uppercase, one lowercase, one number</small>
+                                <div id="passwordError" class="text-danger small mt-1"></div>
                             </div>
                             <div class="col-md-12 mb-3">
                                 <label>Confirm Password *</label>
@@ -218,101 +314,270 @@
                                         <i class="bi bi-eye-slash"></i>
                                     </button>
                                 </div>
+                                <div id="confirmError" class="text-danger small mt-1"></div>
                             </div>
                         </div>
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i>
-                            <strong>Important Notice:</strong>
-                            <p class="mb-0 small">Your registration will be reviewed by the administration before approval. You will receive a notification once your account is activated.</p>
+                        <div class="alert alert-warning mt-3">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <strong>Important:</strong> Your account will be reviewed by the administration before activation.
                         </div>
                         <div class="d-flex justify-content-between">
                             <button type="button" class="btn btn-secondary" onclick="prevStep(2)"><i class="bi bi-arrow-left"></i> Back</button>
-                            <button type="submit" class="btn btn-success">Submit Registration <i class="bi bi-check-circle"></i></button>
+                            <button type="button" class="btn btn-primary" onclick="nextStep(4)">Next <i class="bi bi-arrow-right"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Review & Submit -->
+                    <div class="form-step" id="step4">
+                        <h5 class="mb-3"><i class="bi bi-check-circle me-2"></i>Review Your Information</h5>
+                        <div class="dashboard-card mb-3" id="reviewContent">
+                            <!-- Review content will be populated here -->
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                            <label class="form-check-label">
+                                I confirm that all information provided is accurate and complete to the best of my knowledge.
+                            </label>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary" onclick="prevStep(3)"><i class="bi bi-arrow-left"></i> Back</button>
+                            <button type="submit" class="btn btn-success">Submit Registration <i class="bi bi-send-check"></i></button>
                         </div>
                     </div>
                 </form>
-                
-                <div class="text-center mt-4">
-                    <p class="mb-0">Already have an account? <a href="login.html">Login here</a></p>
-                </div>
             </div>
         </div>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/storage.js"></script>
     <script src="assets/js/auth.js"></script>
     <script>
         let currentStep = 1;
-        
+        let registrationData = {};
+
+        // Passport preview
+        document.getElementById('passport').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('File too large. Maximum size is 2MB.');
+                    this.value = '';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const container = document.getElementById('passportPreviewContainer');
+                    container.innerHTML = `<img src="${event.target.result}" class="passport-preview">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Password strength meter
+        document.getElementById('password').addEventListener('input', function() {
+            const password = this.value;
+            const strengthDiv = document.getElementById('passwordStrength');
+            let strength = 0;
+            let message = '';
+            
+            if (password.length >= 8) strength++;
+            if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+            if (password.match(/\d/)) strength++;
+            if (password.match(/[^a-zA-Z\d]/)) strength++;
+            
+            strengthDiv.className = 'password-strength';
+            if (strength === 0) { strengthDiv.style.width = '0%'; message = ''; }
+            else if (strength <= 2) { strengthDiv.classList.add('strength-weak'); message = 'Weak password'; }
+            else if (strength <= 3) { strengthDiv.classList.add('strength-medium'); message = 'Medium password'; }
+            else { strengthDiv.classList.add('strength-strong'); message = 'Strong password'; }
+            
+            document.getElementById('passwordError').textContent = message;
+        });
+
+        // Password confirmation
+        document.getElementById('confirmPassword').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const confirm = this.value;
+            const errorDiv = document.getElementById('confirmError');
+            if (password !== confirm) {
+                errorDiv.textContent = 'Passwords do not match';
+            } else {
+                errorDiv.textContent = '';
+            }
+        });
+
+        // Matric number validation
+        document.getElementById('matricNumber').addEventListener('blur', function() {
+            const matric = this.value;
+            const errorDiv = document.getElementById('matricError');
+            const students = Storage.get('students');
+            const existing = students.find(s => s.matricNumber === matric);
+            if (existing) {
+                errorDiv.textContent = 'Matric number already registered';
+                this.classList.add('is-invalid');
+            } else {
+                errorDiv.textContent = '';
+                this.classList.remove('is-invalid');
+            }
+        });
+
         function nextStep(step) {
-            // Validate current step
-            if (step === 2 && !validateStep1()) return;
-            if (step === 3 && !validateStep2()) return;
+            if (!validateStep(currentStep)) return;
+            
+            // Save current step data
+            saveStepData(currentStep);
             
             document.getElementById(`step${currentStep}`).classList.remove('active');
             document.getElementById(`step${step}Indicator`).classList.add('active');
-            document.getElementById(`step${step}Indicator`).classList.add('completed');
+            if (currentStep < step) {
+                document.getElementById(`step${currentStep}Indicator`).classList.add('completed');
+            }
             document.getElementById(`step${step}`).classList.add('active');
+            
+            if (step === 4) {
+                updateReview();
+            }
+            
             currentStep = step;
         }
-        
+
         function prevStep(step) {
             document.getElementById(`step${currentStep}`).classList.remove('active');
             document.getElementById(`step${step}Indicator`).classList.remove('active', 'completed');
             document.getElementById(`step${step}`).classList.add('active');
             currentStep = step;
         }
-        
-        function validateStep1() {
-            const fullName = document.getElementById('fullName').value;
-            const email = document.getElementById('email').value;
-            const phone = document.getElementById('phone').value;
-            const gender = document.getElementById('gender').value;
-            const dateOfBirth = document.getElementById('dateOfBirth').value;
-            const address = document.getElementById('address').value;
-            
-            if (!fullName || !email || !phone || !gender || !dateOfBirth || !address) {
-                Auth.showToast('Please fill all required fields', 'warning');
-                return false;
+
+        function validateStep(step) {
+            if (step === 1) {
+                const fullName = document.getElementById('fullName').value;
+                const email = document.getElementById('email').value;
+                const phone = document.getElementById('phone').value;
+                const gender = document.getElementById('gender').value;
+                const dateOfBirth = document.getElementById('dateOfBirth').value;
+                const address = document.getElementById('address').value;
+                
+                if (!fullName || !email || !phone || !gender || !dateOfBirth || !address) {
+                    Auth.showToast('Please fill all required fields', 'warning');
+                    return false;
+                }
+                if (!email.includes('@')) {
+                    Auth.showToast('Please enter a valid email address', 'warning');
+                    return false;
+                }
+                return true;
             }
-            
-            if (!email.includes('@')) {
-                Auth.showToast('Please enter a valid email address', 'warning');
-                return false;
+            if (step === 2) {
+                const matricNumber = document.getElementById('matricNumber').value;
+                const department = document.getElementById('department').value;
+                const level = document.getElementById('level').value;
+                const semester = document.getElementById('semester').value;
+                
+                if (!matricNumber || !department || !level || !semester) {
+                    Auth.showToast('Please fill all academic fields', 'warning');
+                    return false;
+                }
+                return true;
             }
-            
+            if (step === 3) {
+                const password = document.getElementById('password').value;
+                const confirm = document.getElementById('confirmPassword').value;
+                if (password.length < 8) {
+                    Auth.showToast('Password must be at least 8 characters', 'warning');
+                    return false;
+                }
+                if (password !== confirm) {
+                    Auth.showToast('Passwords do not match', 'warning');
+                    return false;
+                }
+                return true;
+            }
             return true;
         }
-        
-        function validateStep2() {
-            const matricNumber = document.getElementById('matricNumber').value;
-            const department = document.getElementById('department').value;
-            const level = document.getElementById('level').value;
-            const semester = document.getElementById('semester').value;
+
+        function saveStepData(step) {
+            if (step === 1) {
+                registrationData.name = document.getElementById('fullName').value;
+                registrationData.email = document.getElementById('email').value;
+                registrationData.phone = document.getElementById('phone').value;
+                registrationData.gender = document.getElementById('gender').value;
+                registrationData.dateOfBirth = document.getElementById('dateOfBirth').value;
+                registrationData.address = document.getElementById('address').value;
+            } else if (step === 2) {
+                registrationData.matricNumber = document.getElementById('matricNumber').value;
+                registrationData.department = document.getElementById('department').value;
+                registrationData.level = document.getElementById('level').value;
+                registrationData.semester = document.getElementById('semester').value;
+                registrationData.session = document.getElementById('session').value;
+            } else if (step === 3) {
+                registrationData.password = document.getElementById('password').value;
+            }
+        }
+
+        function updateReview() {
+            const reviewDiv = document.getElementById('reviewContent');
+            reviewDiv.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Personal Information</strong>
+                        <hr class="my-2">
+                        <p class="mb-1"><strong>Name:</strong> ${registrationData.name || 'N/A'}</p>
+                        <p class="mb-1"><strong>Email:</strong> ${registrationData.email || 'N/A'}</p>
+                        <p class="mb-1"><strong>Phone:</strong> ${registrationData.phone || 'N/A'}</p>
+                        <p class="mb-1"><strong>Gender:</strong> ${registrationData.gender || 'N/A'}</p>
+                        <p class="mb-1"><strong>DOB:</strong> ${registrationData.dateOfBirth || 'N/A'}</p>
+                        <p class="mb-1"><strong>Address:</strong> ${registrationData.address || 'N/A'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Academic Information</strong>
+                        <hr class="my-2">
+                        <p class="mb-1"><strong>Matric No:</strong> ${registrationData.matricNumber || 'N/A'}</p>
+                        <p class="mb-1"><strong>Department:</strong> ${registrationData.department || 'N/A'}</p>
+                        <p class="mb-1"><strong>Level:</strong> ${registrationData.level || 'N/A'}</p>
+                        <p class="mb-1"><strong>Semester:</strong> ${registrationData.semester || 'N/A'}</p>
+                        <p class="mb-1"><strong>Session:</strong> ${registrationData.session || 'N/A'}</p>
+                    </div>
+                </div>
+                <hr>
+                <div class="alert alert-info small mb-0">
+                    <i class="bi bi-clock-history"></i> Registration submitted for admin approval. You will receive an email notification once approved.
+                </div>
+            `;
+        }
+
+        // Form submission
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            if (!matricNumber || !department || !level || !semester) {
-                Auth.showToast('Please fill all academic fields', 'warning');
-                return false;
+            if (!document.getElementById('termsCheck').checked) {
+                Auth.showToast('Please accept the terms and conditions', 'warning');
+                return;
             }
             
-            return true;
-        }
-        
-        // Passport preview
-        document.getElementById('passport').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
+            // Handle passport upload
+            const passportFile = document.getElementById('passport').files[0];
+            if (passportFile) {
                 const reader = new FileReader();
-                reader.onload = function(event) {
-                    const preview = document.getElementById('passportPreview');
-                    preview.src = event.target.result;
-                    preview.style.display = 'block';
+                reader.onloadend = () => {
+                    registrationData.passport = reader.result;
+                    const result = Auth.registerStudent(registrationData);
+                    Auth.showToast(result.message, result.success ? 'success' : 'danger');
+                    if (result.success) {
+                        setTimeout(() => window.location.href = 'login.html', 3000);
+                    }
                 };
-                reader.readAsDataURL(file);
+                reader.readAsDataURL(passportFile);
+            } else {
+                registrationData.passport = '';
+                const result = Auth.registerStudent(registrationData);
+                Auth.showToast(result.message, result.success ? 'success' : 'danger');
+                if (result.success) {
+                    setTimeout(() => window.location.href = 'login.html', 3000);
+                }
             }
         });
-        
+
         // Password toggle
         document.querySelectorAll('.toggle-password').forEach(btn => {
             btn.addEventListener('click', function() {
