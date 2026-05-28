@@ -1,5 +1,4 @@
-// assets/js/auth.js - PATCHED VERSION (only fixing the critical issues)
-// Add this at the beginning of the file or replace the entire auth.js
+// assets/js/auth.js - COMPLETE FIXED VERSION
 
 const Auth = {
     currentUser: null,
@@ -7,10 +6,11 @@ const Auth = {
     sessionCheckInterval: null,
     
     init() {
-        // Fix bfcache issues - prevent extension conflicts
-        if (document.visibilityState === 'visible') {
-            setTimeout(() => this.checkSession(), 100);
-        }
+        // Small delay to ensure storage is ready
+        setTimeout(() => {
+            this.checkSession();
+            this.verifyDemoUsers();
+        }, 100);
         
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
@@ -18,19 +18,46 @@ const Auth = {
             }
         });
         
-        // Fix bfcache - pageshow event with proper handling
         window.addEventListener('pageshow', (event) => {
-            if (event.persisted) {
-                // Don't reload if we're on login page
-                if (!window.location.pathname.includes('login.html')) {
-                    setTimeout(() => this.checkSession(), 50);
-                }
+            if (event.persisted && !window.location.pathname.includes('login.html')) {
+                setTimeout(() => this.checkSession(), 50);
             }
         });
         
         this.setupEventListeners();
         this.setupRegistrationForm();
         this.startSessionChecker();
+    },
+    
+    // Verify demo users exist and are accessible
+    verifyDemoUsers() {
+        const users = Storage.get('users');
+        const students = Storage.get('students');
+        
+        console.log('=== VERIFYING DEMO USERS ===');
+        console.log('Users found:', users.length);
+        console.log('Students found:', students.length);
+        
+        // Test each user
+        const testCredentials = [
+            { email: 'admin@jpts.edu', password: 'admin123', type: 'admin' },
+            { email: 'lecturer@jpts.edu', password: 'lecturer123', type: 'lecturer' },
+            { email: 'student@jpts.edu', password: 'student123', type: 'student' },
+            { email: 'exam.officer@jpts.edu', password: 'exam123', type: 'exam_officer' }
+        ];
+        
+        testCredentials.forEach(cred => {
+            let user = users.find(u => u.email === cred.email);
+            if (!user) {
+                user = students.find(s => s.email === cred.email);
+            }
+            if (user) {
+                const decodedPassword = atob(user.password);
+                console.log(`${cred.type}: ${cred.email} -> Password match: ${decodedPassword === cred.password ? 'YES ✓' : 'NO ✗'}`);
+            } else {
+                console.log(`${cred.type}: ${cred.email} -> NOT FOUND ✗`);
+            }
+        });
     },
     
     startSessionChecker() {
@@ -53,16 +80,28 @@ const Auth = {
     login(email, password, remember = false) {
         try {
             console.log('Attempting login for:', email);
+            console.log('Password length:', password.length);
             
-            // FIX: Check in users table (admin, lecturers, exam officers)
-            let user = null;
+            // Get fresh data from storage
             const users = Storage.get('users');
-            user = users.find(u => u.email === email && atob(u.password) === password && u.status === 'active');
+            const students = Storage.get('students');
             
-            // FIX: Check in students table if not found
+            // Check in users table first
+            let user = users.find(u => {
+                const decodedPassword = atob(u.password);
+                const match = u.email === email && decodedPassword === password && u.status === 'active';
+                if (match) console.log('Found match in users table:', u.name, 'Role:', u.role);
+                return match;
+            });
+            
+            // Check in students table if not found
             if (!user) {
-                const students = Storage.get('students');
-                user = students.find(s => s.email === email && atob(s.password) === password && s.status === 'active');
+                user = students.find(s => {
+                    const decodedPassword = atob(s.password);
+                    const match = s.email === email && decodedPassword === password && s.status === 'active';
+                    if (match) console.log('Found match in students table:', s.name);
+                    return match;
+                });
             }
             
             if (user) {
@@ -80,6 +119,13 @@ const Auth = {
                     localStorage.setItem('session', JSON.stringify(sessionData));
                 } else {
                     sessionStorage.setItem('session', JSON.stringify(sessionData));
+                }
+                
+                // Update last login time
+                if (user.role) {
+                    Storage.update('users', user.id, { lastLogin: new Date().toISOString() });
+                } else {
+                    Storage.update('students', user.id, { lastLogin: new Date().toISOString() });
                 }
                 
                 this.logAction('login', { email: user.email, role: sessionData.role });
@@ -127,8 +173,8 @@ const Auth = {
             ...registrationData,
             password: btoa(registrationData.password),
             status: 'pending',
-            submittedAt: new Date().toISOString(),
-            role: 'student'
+            role: 'student',
+            submittedAt: new Date().toISOString()
         };
         
         Storage.add('studentRegistrations', registration);
@@ -137,6 +183,48 @@ const Auth = {
         this.addNotification('admin', 'New Student Registration', `${registrationData.name} (${registrationData.matricNumber}) has registered and is awaiting approval.`);
         
         return { success: true, message: 'Registration submitted for approval. You will be notified once approved.' };
+    },
+    
+    approveStudentRegistration(registrationId) {
+        const registration = Storage.findOne('studentRegistrations', r => r.id === registrationId);
+        if (!registration) return false;
+        
+        const student = {
+            id: Storage.generateId(),
+            name: registration.name,
+            matricNumber: registration.matricNumber,
+            email: registration.email,
+            password: registration.password,
+            department: registration.department,
+            level: registration.level,
+            semester: registration.semester,
+            phone: registration.phone,
+            address: registration.address,
+            gender: registration.gender,
+            dateOfBirth: registration.dateOfBirth,
+            passport: registration.passport || '',
+            status: 'active',
+            role: 'student',
+            approvedAt: new Date().toISOString(),
+            createdAt: registration.createdAt
+        };
+        
+        Storage.add('students', student);
+        Storage.delete('studentRegistrations', registrationId);
+        
+        this.addNotification(student.id, 'Registration Approved', 'Your account has been approved. You can now log in.');
+        this.addNotification('admin', 'Student Approved', `${student.name} has been approved.`);
+        
+        return true;
+    },
+    
+    rejectStudentRegistration(registrationId, reason) {
+        const registration = Storage.findOne('studentRegistrations', r => r.id === registrationId);
+        if (!registration) return false;
+        
+        this.addNotification(registration.email, 'Registration Rejected', `Your registration was rejected. Reason: ${reason}`);
+        Storage.delete('studentRegistrations', registrationId);
+        return true;
     },
     
     logout(message = null) {
@@ -165,7 +253,6 @@ const Auth = {
     },
     
     checkSession() {
-        // Don't run checks on login, register, or index pages
         const currentPath = window.location.pathname;
         if (currentPath.includes('login.html') || currentPath.includes('register.html') || 
             currentPath.includes('forgot-password.html') || currentPath.includes('index.html')) {
@@ -181,12 +268,6 @@ const Auth = {
                 if (Date.now() - sessionData.loginTime < this.sessionTimeout) {
                     this.currentUser = sessionData.user;
                     this.updateUserInterface();
-                    
-                    // Check if current page is accessible for this role
-                    const currentPage = currentPath.split('/').pop().replace('.html', '');
-                    if (!this.validatePageAccess(currentPage, sessionData.role)) {
-                        this.redirectToDashboard();
-                    }
                     return true;
                 } else {
                     this.logout('Session expired. Please login again.');
@@ -194,7 +275,6 @@ const Auth = {
                 }
             }
             
-            // No session, redirect to login for protected pages
             if (!currentPath.includes('login.html') && !currentPath.includes('index.html')) {
                 window.location.href = 'login.html';
             }
@@ -203,18 +283,6 @@ const Auth = {
             console.warn('Session check error:', error);
             return false;
         }
-    },
-    
-    validatePageAccess(page, role) {
-        const rolePages = {
-            admin: ['dashboard', 'students', 'lecturers', 'courses', 'results', 'admin-approvals', 'student-approvals', 'course-approvals', 'profile-approvals', 'transcript', 'reports', 'settings', 'profile'],
-            lecturer: ['dashboard', 'my-courses', 'enter-results', 'my-students', 'transcript', 'profile'],
-            student: ['dashboard', 'my-results', 'semester-gpa', 'course-registration', 'transcript', 'profile', 'notifications'],
-            exam_officer: ['dashboard', 'results-review', 'approve-results', 'students', 'courses', 'reports', 'transcript']
-        };
-        
-        const allowedPages = rolePages[role] || rolePages.student;
-        return allowedPages.includes(page) || page === 'dashboard' || page === '';
     },
     
     updateUserInterface() {
@@ -229,9 +297,8 @@ const Auth = {
         const notifications = Storage.get('notifications').filter(n => n.userId === this.currentUser?.id && !n.read);
         const badge = document.getElementById('notificationBadge');
         if (badge) {
-            const count = notifications.length;
-            badge.textContent = count;
-            badge.style.display = count > 0 ? 'inline-block' : 'none';
+            badge.textContent = notifications.length;
+            badge.style.display = notifications.length > 0 ? 'inline-block' : 'none';
         }
     },
     
@@ -263,11 +330,6 @@ const Auth = {
         return notification;
     },
     
-    markNotificationRead(notificationId) {
-        Storage.update('notifications', notificationId, { read: true });
-        this.updateNotificationBadge();
-    },
-    
     logAction(action, details) {
         const log = {
             id: Storage.generateId(),
@@ -275,8 +337,7 @@ const Auth = {
             userEmail: this.currentUser?.email || 'system',
             action: action,
             details: details,
-            timestamp: new Date().toISOString(),
-            ip: 'simulated'
+            timestamp: new Date().toISOString()
         };
         const logs = Storage.get('auditLogs');
         logs.push(log);
@@ -328,22 +389,12 @@ const Auth = {
             });
         });
         
-        // Check for logout message
         const logoutMessage = sessionStorage.getItem('logoutMessage');
         if (logoutMessage && window.location.pathname.includes('login.html')) {
             setTimeout(() => {
                 this.showToast(logoutMessage, 'info');
                 sessionStorage.removeItem('logoutMessage');
             }, 500);
-        }
-        
-        // Fix registration button click
-        const registerBtn = document.getElementById('registerBtn');
-        if (registerBtn) {
-            registerBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                window.location.href = 'register.html';
-            });
         }
     },
     
@@ -381,7 +432,6 @@ const Auth = {
                     session: document.getElementById('session')?.value || '2023/2024'
                 };
                 
-                // Handle passport upload
                 const passportFile = document.getElementById('passport')?.files[0];
                 if (passportFile) {
                     const reader = new FileReader();
@@ -414,15 +464,14 @@ const Auth = {
         }
         
         const toast = document.createElement('div');
-        toast.className = `custom-toast alert alert-${type} fade-in`;
-        toast.style.cssText = 'animation: slideInRight 0.3s ease;';
+        toast.className = `custom-toast alert alert-${type}`;
         toast.innerHTML = `
             <div class="d-flex align-items-center justify-content-between">
                 <div>
-                    <i class="bi bi-${type === 'success' ? 'check-circle-fill' : type === 'danger' ? 'exclamation-triangle-fill' : 'info-circle-fill'} me-2"></i>
+                    <i class="bi bi-${type === 'success' ? 'check-circle-fill' : 'exclamation-triangle-fill'} me-2"></i>
                     <span>${message}</span>
                 </div>
-                <button type="button" class="btn-close btn-sm" style="font-size: 0.75rem;"></button>
+                <button type="button" class="btn-close btn-sm"></button>
             </div>
         `;
         
@@ -436,7 +485,7 @@ const Auth = {
     }
 };
 
-// Initialize auth when DOM is ready - with bfcache protection
+// Initialize auth when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => Auth.init(), 100);
@@ -444,3 +493,6 @@ if (document.readyState === 'loading') {
 } else {
     setTimeout(() => Auth.init(), 100);
 }
+
+// Make Auth available globally
+window.Auth = Auth;
