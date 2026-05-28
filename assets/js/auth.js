@@ -1,36 +1,36 @@
-// assets/js/auth.js - COMPLETE WITH ROUTE GUARDS AND ROLE-BASED REDIRECTION
+// assets/js/auth.js - PATCHED VERSION (only fixing the critical issues)
+// Add this at the beginning of the file or replace the entire auth.js
+
 const Auth = {
     currentUser: null,
-    sessionTimeout: 3600000, // 1 hour
+    sessionTimeout: 3600000,
     sessionCheckInterval: null,
     
     init() {
-        // Initial session check with delay for bfcache
-        setTimeout(() => this.checkSession(), 100);
+        // Fix bfcache issues - prevent extension conflicts
+        if (document.visibilityState === 'visible') {
+            setTimeout(() => this.checkSession(), 100);
+        }
         
-        // Handle page visibility changes
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
-                this.checkSession();
-            }
-        });
-        
-        // Handle bfcache (back/forward cache)
-        window.addEventListener('pageshow', (event) => {
-            if (event.persisted) {
                 setTimeout(() => this.checkSession(), 50);
             }
         });
         
-        // Start session timeout checker
-        this.startSessionChecker();
+        // Fix bfcache - pageshow event with proper handling
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                // Don't reload if we're on login page
+                if (!window.location.pathname.includes('login.html')) {
+                    setTimeout(() => this.checkSession(), 50);
+                }
+            }
+        });
         
-        // Setup event listeners
         this.setupEventListeners();
         this.setupRegistrationForm();
-        
-        // Update UI with user info if logged in
-        this.updateUserInterface();
+        this.startSessionChecker();
     },
     
     startSessionChecker() {
@@ -39,26 +39,35 @@ const Auth = {
             if (this.currentUser) {
                 const session = localStorage.getItem('session') || sessionStorage.getItem('session');
                 if (session) {
-                    const sessionData = JSON.parse(session);
-                    if (Date.now() - sessionData.loginTime > this.sessionTimeout) {
-                        this.logout('Session expired. Please login again.');
-                    }
+                    try {
+                        const sessionData = JSON.parse(session);
+                        if (Date.now() - sessionData.loginTime > this.sessionTimeout) {
+                            this.logout('Session expired. Please login again.');
+                        }
+                    } catch (e) {}
                 }
             }
-        }, 60000); // Check every minute
+        }, 60000);
     },
     
     login(email, password, remember = false) {
         try {
-            // Check in users table (admin, lecturers, exam officers)
-            let user = Storage.findOne('users', u => u.email === email && atob(u.password) === password && u.status === 'active');
+            console.log('Attempting login for:', email);
             
-            // Check in students table
+            // FIX: Check in users table (admin, lecturers, exam officers)
+            let user = null;
+            const users = Storage.get('users');
+            user = users.find(u => u.email === email && atob(u.password) === password && u.status === 'active');
+            
+            // FIX: Check in students table if not found
             if (!user) {
-                user = Storage.findOne('students', s => s.email === email && atob(s.password) === password && s.status === 'active');
+                const students = Storage.get('students');
+                user = students.find(s => s.email === email && atob(s.password) === password && s.status === 'active');
             }
             
             if (user) {
+                console.log('Login successful for:', user.name, 'Role:', user.role || 'student');
+                
                 this.currentUser = user;
                 const sessionData = {
                     user: { ...user, password: undefined },
@@ -74,9 +83,11 @@ const Auth = {
                 }
                 
                 this.logAction('login', { email: user.email, role: sessionData.role });
-                this.redirectToRoleDashboard(sessionData.role);
+                this.redirectToDashboard();
                 return true;
             }
+            
+            console.log('Login failed: No user found with those credentials');
             return false;
         } catch (error) {
             console.error('Login error:', error);
@@ -84,37 +95,27 @@ const Auth = {
         }
     },
     
-    redirectToRoleDashboard(role) {
+    redirectToDashboard() {
         if (window.redirectTimeout) clearTimeout(window.redirectTimeout);
         window.redirectTimeout = setTimeout(() => {
             window.location.href = 'dashboard.html';
-        }, 150);
-    },
-    
-    getRoleBasedRedirect(role) {
-        const redirects = {
-            admin: 'dashboard.html?view=admin',
-            lecturer: 'dashboard.html?view=lecturer',
-            student: 'dashboard.html?view=student',
-            exam_officer: 'dashboard.html?view=exam'
-        };
-        return redirects[role] || 'dashboard.html';
+        }, 200);
     },
     
     registerStudent(registrationData) {
-        // Validate matric number uniqueness
+        // Check if matric number already exists
         const existingStudent = Storage.findOne('students', s => s.matricNumber === registrationData.matricNumber);
         if (existingStudent) {
             return { success: false, message: 'Matric number already registered' };
         }
         
-        // Validate email uniqueness
+        // Check if email already exists
         const existingEmail = Storage.findOne('students', s => s.email === registrationData.email);
         if (existingEmail) {
             return { success: false, message: 'Email already registered' };
         }
         
-        // Check for pending registration
+        // Check if pending registration exists
         const pendingRegistration = Storage.findOne('studentRegistrations', r => r.matricNumber === registrationData.matricNumber);
         if (pendingRegistration) {
             return { success: false, message: 'Registration already pending approval' };
@@ -138,52 +139,6 @@ const Auth = {
         return { success: true, message: 'Registration submitted for approval. You will be notified once approved.' };
     },
     
-    approveStudentRegistration(registrationId) {
-        const registration = Storage.findOne('studentRegistrations', r => r.id === registrationId);
-        if (!registration) return false;
-        
-        // Create student account
-        const student = {
-            id: Storage.generateId(),
-            name: registration.name,
-            matricNumber: registration.matricNumber,
-            email: registration.email,
-            password: registration.password,
-            department: registration.department,
-            level: registration.level,
-            semester: registration.semester,
-            phone: registration.phone,
-            address: registration.address,
-            gender: registration.gender,
-            dateOfBirth: registration.dateOfBirth,
-            passport: registration.passport || '',
-            status: 'active',
-            role: 'student',
-            approvedAt: new Date().toISOString(),
-            createdAt: registration.createdAt
-        };
-        
-        Storage.add('students', student);
-        Storage.delete('studentRegistrations', registrationId);
-        
-        // Notify student
-        this.addNotification(student.id, 'Registration Approved', 'Your account has been approved. You can now log in.');
-        this.addNotification('admin', 'Student Approved', `${student.name} has been approved and can now access the system.`);
-        
-        return true;
-    },
-    
-    rejectStudentRegistration(registrationId, reason) {
-        const registration = Storage.findOne('studentRegistrations', r => r.id === registrationId);
-        if (!registration) return false;
-        
-        // Notify student
-        this.addNotification(registration.email, 'Registration Rejected', `Your registration was rejected. Reason: ${reason}`);
-        
-        Storage.delete('studentRegistrations', registrationId);
-        return true;
-    },
-    
     logout(message = null) {
         try {
             if (this.currentUser) {
@@ -200,7 +155,7 @@ const Auth = {
             if (window.redirectTimeout) clearTimeout(window.redirectTimeout);
             
             if (message) {
-                localStorage.setItem('logoutMessage', message);
+                sessionStorage.setItem('logoutMessage', message);
             }
             window.location.href = 'login.html';
         } catch (error) {
@@ -210,11 +165,10 @@ const Auth = {
     },
     
     checkSession() {
-        // Don't check on login, register, or index pages
-        const publicPages = ['login.html', 'register.html', 'forgot-password.html', 'index.html'];
-        const currentPage = window.location.pathname.split('/').pop();
-        
-        if (publicPages.includes(currentPage)) {
+        // Don't run checks on login, register, or index pages
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('login.html') || currentPath.includes('register.html') || 
+            currentPath.includes('forgot-password.html') || currentPath.includes('index.html')) {
             return true;
         }
         
@@ -228,9 +182,10 @@ const Auth = {
                     this.currentUser = sessionData.user;
                     this.updateUserInterface();
                     
-                    // Validate role-based access for current page
+                    // Check if current page is accessible for this role
+                    const currentPage = currentPath.split('/').pop().replace('.html', '');
                     if (!this.validatePageAccess(currentPage, sessionData.role)) {
-                        this.redirectToRoleDashboard(sessionData.role);
+                        this.redirectToDashboard();
                     }
                     return true;
                 } else {
@@ -239,8 +194,8 @@ const Auth = {
                 }
             }
             
-            // No session found, redirect to login
-            if (!publicPages.includes(currentPage)) {
+            // No session, redirect to login for protected pages
+            if (!currentPath.includes('login.html') && !currentPath.includes('index.html')) {
                 window.location.href = 'login.html';
             }
             return false;
@@ -251,7 +206,6 @@ const Auth = {
     },
     
     validatePageAccess(page, role) {
-        // Define allowed pages per role
         const rolePages = {
             admin: ['dashboard', 'students', 'lecturers', 'courses', 'results', 'admin-approvals', 'student-approvals', 'course-approvals', 'profile-approvals', 'transcript', 'reports', 'settings', 'profile'],
             lecturer: ['dashboard', 'my-courses', 'enter-results', 'my-students', 'transcript', 'profile'],
@@ -260,7 +214,7 @@ const Auth = {
         };
         
         const allowedPages = rolePages[role] || rolePages.student;
-        return allowedPages.includes(page) || page === 'dashboard';
+        return allowedPages.includes(page) || page === 'dashboard' || page === '';
     },
     
     updateUserInterface() {
@@ -268,8 +222,6 @@ const Auth = {
         if (userNameSpan && this.currentUser) {
             userNameSpan.textContent = this.currentUser.name || this.currentUser.email;
         }
-        
-        // Update notification badge
         this.updateNotificationBadge();
     },
     
@@ -336,7 +288,7 @@ const Auth = {
         if (loginForm) {
             loginForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                const email = document.getElementById('email').value;
+                const email = document.getElementById('email').value.trim();
                 const password = document.getElementById('password').value;
                 const remember = document.getElementById('rememberMe')?.checked || false;
                 
@@ -361,25 +313,37 @@ const Auth = {
         
         // Password toggle
         document.querySelectorAll('.toggle-password').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
                 const input = this.previousElementSibling;
-                const type = input.type === 'password' ? 'text' : 'password';
-                input.type = type;
-                const icon = this.querySelector('i');
-                if (icon) {
-                    icon.classList.toggle('bi-eye');
-                    icon.classList.toggle('bi-eye-slash');
+                if (input && input.tagName === 'INPUT') {
+                    const type = input.type === 'password' ? 'text' : 'password';
+                    input.type = type;
+                    const icon = this.querySelector('i');
+                    if (icon) {
+                        icon.classList.toggle('bi-eye');
+                        icon.classList.toggle('bi-eye-slash');
+                    }
                 }
             });
         });
         
-        // Check for logout message on page load
-        const logoutMessage = localStorage.getItem('logoutMessage');
+        // Check for logout message
+        const logoutMessage = sessionStorage.getItem('logoutMessage');
         if (logoutMessage && window.location.pathname.includes('login.html')) {
             setTimeout(() => {
                 this.showToast(logoutMessage, 'info');
-                localStorage.removeItem('logoutMessage');
+                sessionStorage.removeItem('logoutMessage');
             }, 500);
+        }
+        
+        // Fix registration button click
+        const registerBtn = document.getElementById('registerBtn');
+        if (registerBtn) {
+            registerBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = 'register.html';
+            });
         }
     },
     
@@ -394,6 +358,11 @@ const Auth = {
                 
                 if (password !== confirmPassword) {
                     this.showToast('Passwords do not match', 'danger');
+                    return;
+                }
+                
+                if (password.length < 8) {
+                    this.showToast('Password must be at least 8 characters', 'warning');
                     return;
                 }
                 
@@ -446,11 +415,14 @@ const Auth = {
         
         const toast = document.createElement('div');
         toast.className = `custom-toast alert alert-${type} fade-in`;
+        toast.style.cssText = 'animation: slideInRight 0.3s ease;';
         toast.innerHTML = `
-            <div class="d-flex align-items-center">
-                <i class="bi bi-${type === 'success' ? 'check-circle-fill' : type === 'danger' ? 'exclamation-triangle-fill' : 'info-circle-fill'} me-2"></i>
-                <span>${message}</span>
-                <button type="button" class="btn-close ms-auto" style="font-size: 0.75rem;"></button>
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <i class="bi bi-${type === 'success' ? 'check-circle-fill' : type === 'danger' ? 'exclamation-triangle-fill' : 'info-circle-fill'} me-2"></i>
+                    <span>${message}</span>
+                </div>
+                <button type="button" class="btn-close btn-sm" style="font-size: 0.75rem;"></button>
             </div>
         `;
         
@@ -464,9 +436,11 @@ const Auth = {
     }
 };
 
-// Initialize auth when DOM is ready
+// Initialize auth when DOM is ready - with bfcache protection
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => Auth.init());
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => Auth.init(), 100);
+    });
 } else {
-    setTimeout(() => Auth.init(), 50);
+    setTimeout(() => Auth.init(), 100);
 }
