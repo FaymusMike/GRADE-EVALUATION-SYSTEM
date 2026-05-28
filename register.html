@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration | JPTS Institute</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .registration-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        .form-step {
+            display: none;
+        }
+        .form-step.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+        .step .circle {
+            width: 40px;
+            height: 40px;
+            background: #e0e0e0;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: relative;
+            z-index: 2;
+        }
+        .step.active .circle {
+            background: var(--gradient-primary);
+            color: white;
+        }
+        .step.completed .circle {
+            background: #28a745;
+            color: white;
+        }
+        .step .label {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+        .step:not(:last-child):before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: #e0e0e0;
+            z-index: 1;
+        }
+        .step.active:not(:last-child):before,
+        .step.completed:not(:last-child):before {
+            background: var(--primary-color);
+        }
+        .passport-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body class="auth-body">
+    <div class="container">
+        <div class="registration-container card shadow-lg border-0">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <i class="bi bi-mortarboard-fill fs-1 text-primary"></i>
+                    <h2 class="mt-2">JPTS Institute</h2>
+                    <p class="text-muted">Student Registration Portal</p>
+                    <p class="small text-muted">All registrations require admin approval before access</p>
+                </div>
+                
+                <!-- Step Indicators -->
+                <div class="step-indicator">
+                    <div class="step active" id="step1Indicator">
+                        <div class="circle">1</div>
+                        <div class="label">Personal Info</div>
+                    </div>
+                    <div class="step" id="step2Indicator">
+                        <div class="circle">2</div>
+                        <div class="label">Academic Info</div>
+                    </div>
+                    <div class="step" id="step3Indicator">
+                        <div class="circle">3</div>
+                        <div class="label">Security</div>
+                    </div>
+                </div>
+                
+                <form id="registerForm">
+                    <!-- Step 1: Personal Information -->
+                    <div class="form-step active" id="step1">
+                        <h5 class="mb-3">Personal Information</h5>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label>Full Name *</label>
+                                <input type="text" class="form-control" id="fullName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Email Address *</label>
+                                <input type="email" class="form-control" id="email" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Phone Number *</label>
+                                <input type="tel" class="form-control" id="phone" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Gender *</label>
+                                <select class="form-control" id="gender" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Date of Birth *</label>
+                                <input type="date" class="form-control" id="dateOfBirth" required>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label>Residential Address *</label>
+                                <textarea class="form-control" id="address" rows="2" required></textarea>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label>Passport Photograph</label>
+                                <input type="file" class="form-control" id="passport" accept="image/*">
+                                <img id="passportPreview" class="passport-preview" style="display: none;">
+                                <small class="text-muted">Optional - Will appear on your profile</small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-primary" onclick="nextStep(2)">Next <i class="bi bi-arrow-right"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2: Academic Information -->
+                    <div class="form-step" id="step2">
+                        <h5 class="mb-3">Academic Information</h5>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label>Matric Number *</label>
+                                <input type="text" class="form-control" id="matricNumber" placeholder="JPT/2024/XXX" required>
+                                <small class="text-muted">Enter your official matriculation number</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Department *</label>
+                                <select class="form-control" id="department" required>
+                                    <option value="">Select Department</option>
+                                    <option value="Computer Science">Computer Science</option>
+                                    <option value="Engineering">Engineering</option>
+                                    <option value="Business Administration">Business Administration</option>
+                                    <option value="Medicine">Medicine</option>
+                                    <option value="Law">Law</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Level *</label>
+                                <select class="form-control" id="level" required>
+                                    <option value="">Select Level</option>
+                                    <option value="100">100 Level</option>
+                                    <option value="200">200 Level</option>
+                                    <option value="300">300 Level</option>
+                                    <option value="400">400 Level</option>
+                                    <option value="500">500 Level</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Current Semester *</label>
+                                <select class="form-control" id="semester" required>
+                                    <option value="">Select Semester</option>
+                                    <option value="First">First Semester</option>
+                                    <option value="Second">Second Semester</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary" onclick="prevStep(1)"><i class="bi bi-arrow-left"></i> Back</button>
+                            <button type="button" class="btn btn-primary" onclick="nextStep(3)">Next <i class="bi bi-arrow-right"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3: Security -->
+                    <div class="form-step" id="step3">
+                        <h5 class="mb-3">Account Security</h5>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label>Password *</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="password" required>
+                                    <button class="btn btn-outline-secondary toggle-password" type="button">
+                                        <i class="bi bi-eye-slash"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted">Minimum 8 characters, at least one uppercase, one lowercase, one number</small>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label>Confirm Password *</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="confirmPassword" required>
+                                    <button class="btn btn-outline-secondary toggle-password" type="button">
+                                        <i class="bi bi-eye-slash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Important Notice:</strong>
+                            <p class="mb-0 small">Your registration will be reviewed by the administration before approval. You will receive a notification once your account is activated.</p>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary" onclick="prevStep(2)"><i class="bi bi-arrow-left"></i> Back</button>
+                            <button type="submit" class="btn btn-success">Submit Registration <i class="bi bi-check-circle"></i></button>
+                        </div>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-4">
+                    <p class="mb-0">Already have an account? <a href="login.html">Login here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/storage.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script>
+        let currentStep = 1;
+        
+        function nextStep(step) {
+            // Validate current step
+            if (step === 2 && !validateStep1()) return;
+            if (step === 3 && !validateStep2()) return;
+            
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            document.getElementById(`step${step}Indicator`).classList.add('active');
+            document.getElementById(`step${step}Indicator`).classList.add('completed');
+            document.getElementById(`step${step}`).classList.add('active');
+            currentStep = step;
+        }
+        
+        function prevStep(step) {
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            document.getElementById(`step${step}Indicator`).classList.remove('active', 'completed');
+            document.getElementById(`step${step}`).classList.add('active');
+            currentStep = step;
+        }
+        
+        function validateStep1() {
+            const fullName = document.getElementById('fullName').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const gender = document.getElementById('gender').value;
+            const dateOfBirth = document.getElementById('dateOfBirth').value;
+            const address = document.getElementById('address').value;
+            
+            if (!fullName || !email || !phone || !gender || !dateOfBirth || !address) {
+                Auth.showToast('Please fill all required fields', 'warning');
+                return false;
+            }
+            
+            if (!email.includes('@')) {
+                Auth.showToast('Please enter a valid email address', 'warning');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        function validateStep2() {
+            const matricNumber = document.getElementById('matricNumber').value;
+            const department = document.getElementById('department').value;
+            const level = document.getElementById('level').value;
+            const semester = document.getElementById('semester').value;
+            
+            if (!matricNumber || !department || !level || !semester) {
+                Auth.showToast('Please fill all academic fields', 'warning');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // Passport preview
+        document.getElementById('passport').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const preview = document.getElementById('passportPreview');
+                    preview.src = event.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Password toggle
+        document.querySelectorAll('.toggle-password').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const input = this.previousElementSibling;
+                const type = input.type === 'password' ? 'text' : 'password';
+                input.type = type;
+                const icon = this.querySelector('i');
+                icon.classList.toggle('bi-eye');
+                icon.classList.toggle('bi-eye-slash');
+            });
+        });
+    </script>
+</body>
+</html>
