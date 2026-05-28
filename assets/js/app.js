@@ -1,4 +1,4 @@
-// assets/js/app.js - Main Application Logic
+// assets/js/app.js - COMPLETE FIXED FILE
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize application
     initApp();
@@ -11,7 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Load initial page
     if (window.location.pathname.includes('dashboard.html')) {
-        UI.loadPage('dashboard');
+        // Small delay to ensure auth is ready
+        setTimeout(() => {
+            if (Auth.currentUser) {
+                UI.loadPage('dashboard');
+            }
+        }, 100);
     }
 });
 
@@ -21,20 +26,17 @@ function initApp() {
     const currentPage = window.location.pathname.split('/').pop();
     
     if (protectedPages.includes(currentPage) && !Auth.currentUser) {
-        window.location.href = 'login.html';
+        // Small delay to allow session check to complete
+        setTimeout(() => {
+            if (!Auth.currentUser) {
+                window.location.href = 'login.html';
+            }
+        }, 200);
         return;
     }
     
-    // Display user info if logged in
-    if (Auth.currentUser) {
-        const userNameSpan = document.getElementById('userName');
-        if (userNameSpan) {
-            userNameSpan.textContent = Auth.currentUser.name;
-        }
-    }
-    
     // Initialize counters on landing page
-    if (currentPage === 'index.html' || currentPage === '') {
+    if (currentPage === 'index.html' || currentPage === '' || currentPage === '/') {
         initCounters();
     }
     
@@ -42,7 +44,21 @@ function initApp() {
     const sidebarToggle = document.getElementById('sidebarToggle');
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', () => {
-            document.getElementById('sidebar').classList.toggle('collapsed');
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('collapsed');
+            }
+        });
+    }
+    
+    // Mobile sidebar toggle
+    const sidebarToggleMobile = document.getElementById('sidebarToggleMobile');
+    if (sidebarToggleMobile) {
+        sidebarToggleMobile.addEventListener('click', () => {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('show');
+            }
         });
     }
 }
@@ -53,12 +69,18 @@ function setupNavigation() {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const page = link.getAttribute('data-page');
-            if (page) {
+            if (page && typeof UI !== 'undefined' && UI.loadPage) {
                 UI.loadPage(page);
                 
                 // Update active state
                 navLinks.forEach(l => l.classList.remove('active'));
                 link.classList.add('active');
+                
+                // Close mobile sidebar if open
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar && window.innerWidth < 768) {
+                    sidebar.classList.remove('show');
+                }
             }
         });
     });
@@ -104,6 +126,8 @@ function initCounters() {
     const counters = document.querySelectorAll('.counter');
     counters.forEach(counter => {
         const target = parseInt(counter.getAttribute('data-target'));
+        if (isNaN(target)) return;
+        
         let current = 0;
         const increment = target / 50;
         const updateCounter = () => {
@@ -120,23 +144,33 @@ function initCounters() {
 }
 
 function scrollToFeatures() {
-    document.getElementById('features').scrollIntoView({ behavior: 'smooth' });
+    const featuresSection = document.getElementById('features');
+    if (featuresSection) {
+        featuresSection.scrollIntoView({ behavior: 'smooth' });
+    }
 }
 
-// Toast notification system
 function showToast(message, type = 'info') {
-    Auth.showToast(message, type);
+    if (typeof Auth !== 'undefined' && Auth.showToast) {
+        Auth.showToast(message, type);
+    } else {
+        alert(message);
+    }
 }
 
-// Export functionality
 function exportToCSV(data, filename) {
+    if (!data || data.length === 0) {
+        showToast('No data to export', 'warning');
+        return;
+    }
+    
     const headers = Object.keys(data[0]);
     const csvRows = [];
     csvRows.push(headers.join(','));
     
     for (const row of data) {
         const values = headers.map(header => {
-            const val = row[header];
+            const val = row[header] || '';
             return `"${String(val).replace(/"/g, '""')}"`;
         });
         csvRows.push(values.join(','));
@@ -146,9 +180,13 @@ function exportToCSV(data, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${filename}.csv`;
+    a.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    
+    showToast('Export completed successfully!', 'success');
 }
 
 // Make functions global
