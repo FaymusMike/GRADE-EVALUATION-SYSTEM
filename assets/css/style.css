@@ -1103,6 +1103,53 @@ a:hover {
     overflow: hidden;
 }
 
+/* Add these styles to the end of your style.css file */
+
+/* Ensure proper display for dashboard */
+.dashboard-wrapper {
+    min-height: 100vh;
+}
+
+.main-content {
+    flex: 1;
+    transition: margin-left 0.3s ease;
+}
+
+.content-area {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Fix for sidebar toggle */
+.sidebar-toggle {
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    transition: background 0.2s;
+}
+
+.sidebar-toggle:hover {
+    background: rgba(155, 89, 182, 0.1);
+}
+
+/* Fix for welcome banner */
+.welcome-banner {
+    background: linear-gradient(135deg, #9b59b6 0%, #6c3483 100%);
+}
+
+/* Fix for dashboard cards */
+.dashboard-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+
 /* Role Badges */
 .role-badge.admin { background: var(--danger-color); color: white; }
 .role-badge.lecturer { background: var(--success-color); color: white; }

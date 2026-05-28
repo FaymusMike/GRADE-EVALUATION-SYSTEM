@@ -2,6 +2,30 @@
 // Student, Lecturer, Exam Officer, and Admin dashboards with full functionality
 
 const UI = {
+    // Ensure Auth exists before UI operations
+    authReady: function () {
+        if (typeof Auth === 'undefined') {
+            console.warn('Auth module not loaded yet.');
+            return false;
+        }
+        return true;
+    },
+
+    // Global UI error handler
+    handleError: function(error, context = 'Unknown Context') {
+        console.error(`Error in ${context}:`, error);
+
+        // Prevent crashing if showToast fails
+        try {
+            this.showToast(
+                error?.message || 'An unexpected error occurred',
+                'danger'
+            );
+        } catch (toastError) {
+            console.error('Toast error:', toastError);
+        }
+    },
+
     currentPage: 'dashboard',
     
     async loadPage(page) {

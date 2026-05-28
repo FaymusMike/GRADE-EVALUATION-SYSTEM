@@ -1,44 +1,44 @@
-// assets/js/app.js - COMPLETE FIXED FILE
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize application
-    initApp();
-    
-    // Set up navigation
-    setupNavigation();
-    
-    // Set up theme toggles
-    setupTheme();
-    
-    // Load initial page
-    if (window.location.pathname.includes('dashboard.html')) {
-        // Small delay to ensure auth is ready
-        setTimeout(() => {
-            if (Auth.currentUser) {
-                UI.loadPage('dashboard');
-            }
-        }, 100);
-    }
-});
+// assets/js/app.js - COMPLETE FIXED VERSION
 
-function initApp() {
-    // Check authentication for protected pages
-    const protectedPages = ['dashboard.html', 'transcript.html'];
-    const currentPage = window.location.pathname.split('/').pop();
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('App initializing...');
     
-    if (protectedPages.includes(currentPage) && !Auth.currentUser) {
-        // Small delay to allow session check to complete
-        setTimeout(() => {
-            if (!Auth.currentUser) {
-                window.location.href = 'login.html';
+    // Wait a bit for Auth to be ready
+    setTimeout(() => {
+        // Check if user is authenticated
+        if (typeof Auth !== 'undefined' && Auth.currentUser) {
+            console.log('User authenticated:', Auth.currentUser.name, 'Role:', Auth.currentUser.role);
+            
+            // Update UI with user info
+            updateUserInterface();
+            
+            // Initialize UI and load dashboard
+            if (typeof UI !== 'undefined') {
+                UI.renderSidebar();
+                UI.loadPage('dashboard');
+            } else {
+                console.error('UI not defined');
             }
-        }, 200);
-        return;
-    }
-    
-    // Initialize counters on landing page
-    if (currentPage === 'index.html' || currentPage === '' || currentPage === '/') {
-        initCounters();
-    }
+        } else if (typeof Auth !== 'undefined') {
+            // Try to restore session
+            Auth.checkSession();
+            
+            // If still no user after a short delay, redirect to login
+            setTimeout(() => {
+                if (!Auth.currentUser && !window.location.pathname.includes('login.html')) {
+                    console.log('No authenticated user, redirecting to login');
+                    window.location.href = 'login.html';
+                } else if (Auth.currentUser) {
+                    updateUserInterface();
+                    if (typeof UI !== 'undefined') {
+                        UI.renderSidebar();
+                        UI.loadPage('dashboard');
+                    }
+                }
+            }, 500);
+        }
+    }, 200);
     
     // Initialize sidebar toggle
     const sidebarToggle = document.getElementById('sidebarToggle');
@@ -51,42 +51,18 @@ function initApp() {
         });
     }
     
-    // Mobile sidebar toggle
-    const sidebarToggleMobile = document.getElementById('sidebarToggleMobile');
-    if (sidebarToggleMobile) {
-        sidebarToggleMobile.addEventListener('click', () => {
-            const sidebar = document.getElementById('sidebar');
-            if (sidebar) {
-                sidebar.classList.toggle('show');
-            }
-        });
+    // Initialize theme
+    initTheme();
+});
+
+function updateUserInterface() {
+    const userNameSpan = document.getElementById('userName');
+    if (userNameSpan && Auth.currentUser) {
+        userNameSpan.textContent = Auth.currentUser.name || Auth.currentUser.email;
     }
 }
 
-function setupNavigation() {
-    const navLinks = document.querySelectorAll('[data-page]');
-    navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const page = link.getAttribute('data-page');
-            if (page && typeof UI !== 'undefined' && UI.loadPage) {
-                UI.loadPage(page);
-                
-                // Update active state
-                navLinks.forEach(l => l.classList.remove('active'));
-                link.classList.add('active');
-                
-                // Close mobile sidebar if open
-                const sidebar = document.getElementById('sidebar');
-                if (sidebar && window.innerWidth < 768) {
-                    sidebar.classList.remove('show');
-                }
-            }
-        });
-    });
-}
-
-function setupTheme() {
+function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     
@@ -122,39 +98,12 @@ function setupTheme() {
     }
 }
 
-function initCounters() {
-    const counters = document.querySelectorAll('.counter');
-    counters.forEach(counter => {
-        const target = parseInt(counter.getAttribute('data-target'));
-        if (isNaN(target)) return;
-        
-        let current = 0;
-        const increment = target / 50;
-        const updateCounter = () => {
-            if (current < target) {
-                current += increment;
-                counter.textContent = Math.ceil(current);
-                setTimeout(updateCounter, 20);
-            } else {
-                counter.textContent = target;
-            }
-        };
-        updateCounter();
-    });
-}
-
-function scrollToFeatures() {
-    const featuresSection = document.getElementById('features');
-    if (featuresSection) {
-        featuresSection.scrollIntoView({ behavior: 'smooth' });
-    }
-}
-
+// Helper functions
 function showToast(message, type = 'info') {
     if (typeof Auth !== 'undefined' && Auth.showToast) {
         Auth.showToast(message, type);
     } else {
-        alert(message);
+        console.log(`[${type}] ${message}`);
     }
 }
 
@@ -165,8 +114,7 @@ function exportToCSV(data, filename) {
     }
     
     const headers = Object.keys(data[0]);
-    const csvRows = [];
-    csvRows.push(headers.join(','));
+    const csvRows = [headers.join(',')];
     
     for (const row of data) {
         const values = headers.map(header => {
@@ -192,4 +140,3 @@ function exportToCSV(data, filename) {
 // Make functions global
 window.showToast = showToast;
 window.exportToCSV = exportToCSV;
-window.scrollToFeatures = scrollToFeatures;
