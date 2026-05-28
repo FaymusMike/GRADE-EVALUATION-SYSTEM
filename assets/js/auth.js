@@ -4,8 +4,25 @@ const Auth = {
     sessionTimeout: 3600000, // 1 hour
     
     init() {
-        this.checkSession();
+        // FIX: Delay session check to avoid bfcache conflicts
+        if (document.visibilityState === 'visible') {
+            this.checkSession();
+        } else {
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    this.checkSession();
+                }
+            });
+        }
         this.setupEventListeners();
+        
+        // FIX: Prevent bfcache from destroying session
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                // Page restored from bfcache - recheck session
+                this.checkSession();
+            }
+        });
     },
     
     login(email, password, remember = false) {
@@ -44,18 +61,28 @@ const Auth = {
     },
     
     checkSession() {
-        const session = localStorage.getItem('session') || sessionStorage.getItem('session');
-        if (session) {
-            const sessionData = JSON.parse(session);
-            if (Date.now() - sessionData.loginTime < this.sessionTimeout) {
-                this.currentUser = sessionData.user;
-                return true;
-            } else {
-                this.logout();
-                return false;
-            }
+        // FIX: Don't run on login page or if we already have a user
+        if (window.location.pathname.includes('login.html') || this.currentUser) {
+            return true;
         }
-        return false;
+        
+        try {
+            const session = localStorage.getItem('session') || sessionStorage.getItem('session');
+            if (session) {
+                const sessionData = JSON.parse(session);
+                if (Date.now() - sessionData.loginTime < this.sessionTimeout) {
+                    this.currentUser = sessionData.user;
+                    return true;
+                } else {
+                    this.logout();
+                    return false;
+                }
+            }
+            return false;
+        } catch (error) {
+            console.warn('Session check error:', error);
+            return false;
+        }
     },
     
     hasPermission(permission) {
@@ -73,7 +100,10 @@ const Auth = {
     },
     
     redirectToDashboard(role) {
-        window.location.href = 'dashboard.html';
+        // FIX: Add small delay to ensure session is saved
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 100);
     },
     
     setupEventListeners() {
@@ -134,5 +164,9 @@ const Auth = {
     }
 };
 
-// Initialize auth on page load
-document.addEventListener('DOMContentLoaded', () => Auth.init());
+// FIX: Ensure DOM is fully loaded before initializing
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => Auth.init());
+} else {
+    Auth.init();
+}
